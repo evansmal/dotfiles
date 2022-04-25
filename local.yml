@@ -26,17 +26,30 @@
           - npm
           - yarn
           - neovim
+          - docker
         state: present
-
-    - name: change user {{ username }} shell to fish
-      become: yes
-      user:
-        name: "{{ username }}"
-        shell: /usr/bin/fish
 
     - name: Stow dotfiles in /home/{{ username }}
       shell: "stow -v -t /home/{{ username }} *"
       args:
         chdir: configuration
+
+    - name: Add {{ username }} to the Docker group
+      user:
+        name: '{{ username }}'
+        groups: docker
+        append: yes
+
+    - name: Make sure the Docker service unit is running and enabled
+      systemd:
+        state: started
+        name: docker.service
+        enabled: yes
+
+    - name: Change shell to fish
+      become: yes
+      user:
+        name: "{{ username }}"
+        shell: /usr/bin/fish
 
 
