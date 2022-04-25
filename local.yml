@@ -24,8 +24,8 @@
 
     - name: Link configuration files
       file:
-        src: {{ ansible_env.PWD }}/configuration/fish/.config
-        dest: $HOME/.config
+        src: "{{ ansible_env.PWD }}/configuration/fish/.config"
+        dest: "~/.config"
         state: link
 
 
