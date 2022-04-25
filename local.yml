@@ -1,6 +1,5 @@
 ---
-- name: Install packages
-  hosts: localhost
+- hosts: localhost
   connection: local
   become: true
 
