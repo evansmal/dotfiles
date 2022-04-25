@@ -12,5 +12,12 @@
           - i3-wm
           - lightdm 
           - terminator
+          - cmake
+          - clang
+          - llvm
+          - lld
+          - nodejs
+          - npm
+          - yarn
         state: present
 
