@@ -1,0 +1,12 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhistcnt =2
+let g:netrw_dirhist_2='/home/evan/Projects/mcss-docker/images/aarch64'
+let g:netrw_dirhist_1='/home/evan/Projects/mcss-dev/packages/cnn/src/train'
+let g:netrw_dirhist_0='/home/evan/Projects/mcss-docker/images/vai_q_tensorflow2'
+let g:netrw_dirhist_9='/home/evan/Projects/mcss-docker/images/full'
+let g:netrw_dirhist_8='/home/evan/Projects/mcss-docker/images/zmq'
+let g:netrw_dirhist_7='/home/evan/Projects/mcss-docker/images/full'
+let g:netrw_dirhist_6='/home/evan/Projects/fun/advent-of-code-2020/src/day01'
+let g:netrw_dirhist_5='/home/evan/Projects/fun/advent-of-code-2020/src/utility'
+let g:netrw_dirhist_4='/home/evan/Projects/fun/advent-of-code-2020/src/day01/input.txt'
+let g:netrw_dirhist_3='/home/evan/Projects/interview/src/server.cpp'

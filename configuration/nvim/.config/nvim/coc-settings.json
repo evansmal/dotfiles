@@ -1,0 +1,34 @@
+{
+    "suggest.timeout": 500,
+    "suggest.maxCompleteItemCount": 15,
+    "signature.enable": true,
+    "suggest.triggerCompletionWait": 100,
+    "coc.preferences.rootPatterns": [
+        "package.json"
+    ],
+    "clangd.semanticHighlighting": true,
+    "coc.preferences.semanticTokensHighlights": false,
+    "clangd.arguments": [
+        "--background-index",
+        "-j=12",
+        "-pch-storage=memory"
+    ],
+    "clangd.enabled": true,
+    "clangd.path": "~/.config/coc/extensions/coc-clangd-data/install/13.0.0/clangd_13.0.0/bin/clangd",
+    "typescript.preferences.quoteStyle": "double",
+    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": true,
+    "languageserver": {
+        "bar": {
+            "command": "ocamllsp",
+            "args": [
+            ],
+            "filetypes": [
+                "ml",
+                "mll",
+                "ocaml"
+            ],
+            "initializationOptions": {},
+            "settings": {}
+        }
+    }
+}

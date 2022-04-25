@@ -1,14 +1,20 @@
 ---
 - hosts: localhost
   connection: local
-  become: true
+  become: no
+  vars:
+    username: "{{ ansible_user_id }}"
 
   tasks:
     - name: Install packages
       community.general.pacman:
         name: 
+          - curl
           - git 
           - htop 
+          - stow
+          - fish
+          - nvidia
           - i3-wm
           - lightdm 
           - terminator
@@ -22,11 +28,15 @@
           - neovim
         state: present
 
-    - name: Link configuration files
-      file:
-        src: "{{ ansible_env.PWD }}/configuration/fish/.config"
-        dest: "~/.config"
-        state: link
+    - name: change user {{ username }} shell to fish
+      become: yes
+      user:
+        name: "{{ username }}"
+        shell: /usr/bin/fish
 
+    - name: Stow dotfiles in /home/{{ username }}
+      shell: "stow -v -t /home/{{ username }} *"
+      args:
+        chdir: configuration
 
 
