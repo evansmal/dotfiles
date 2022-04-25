@@ -1,0 +1,12 @@
+---
+- name: Install packages
+  hosts: localhost
+  connection: local
+  become: true
+
+  tasks:
+    - name: Install git
+    community.general.pacman:
+    name: git
+    state: present
+

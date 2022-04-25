@@ -1,0 +1,5 @@
+[user]
+	name = Evan Smal
+	email = evan.smal@hotmail.com
+[core]
+	editor = nvim
