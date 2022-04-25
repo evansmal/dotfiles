@@ -22,8 +22,12 @@
           - neovim
         state: present
 
-    - name: Install VIM Plug
-      ansible.builtin.shell: curl -fLo ~/.local/share/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+    - name: Link configuration files
+      ansible.builtin.file:
+        src: ./configuration/fish/.config
+        dest: $HOME/.config
+        force: yes
+        state: link
 
 
 
