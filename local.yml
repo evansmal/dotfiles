@@ -5,7 +5,7 @@
 
   tasks:
     - name: Install git
-    community.general.pacman:
-      name: git
-      state: present
+      community.general.pacman:
+        name: git
+        state: present
 
