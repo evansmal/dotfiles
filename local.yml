@@ -4,13 +4,8 @@
   become: true
 
   tasks:
-    - name: Install git
+    - name: Install packages
       community.general.pacman:
-        name: git
-        state: present
-
-    - name: Install htop
-      community.general.pacman:
-        name: htop
+        name: git htop i3 lightdm terminator
         state: present
 
