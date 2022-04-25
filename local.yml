@@ -9,3 +9,8 @@
         name: git
         state: present
 
+    - name: Install htop
+      community.general.pacman:
+        name: htop
+        state: present
+
