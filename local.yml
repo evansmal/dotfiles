@@ -6,6 +6,11 @@
   tasks:
     - name: Install packages
       community.general.pacman:
-        name: git htop i3 lightdm terminator
+        name: 
+          - git 
+          - htop 
+          - i3 
+          - lightdm 
+          - terminator
         state: present
 
