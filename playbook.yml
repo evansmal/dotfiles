@@ -1,34 +1,32 @@
 ---
 - hosts: localhost
   connection: local
-  become: yes
+  become: true
   become_user: evan
+
   vars:
     username: "{{ ansible_user_id }}"
 
   tasks:
     - name: Install packages
-      community.general.pacman:
+      become_user: root
+      apt:
         name: 
           - curl
           - git 
           - htop 
           - fish
-          - nvidia
-          - i3-wm
+          - pulseaudio
+          - pavucontrol
+          - i3
           - lightdm 
           - rofi
+          - polybar
           - terminator
           - cmake
           - clang
           - llvm
           - lld
-          - nodejs
-          - npm
-          - yarn
-          - neovim
-          - docker
-          - nemo
         state: present
 
     - name: Link dotsfiles in $HOME
@@ -41,13 +39,70 @@
       loop:
         - { src: .gitconfig, dest: .gitconfig }
         - { src: .xprofile, dest: .xprofile }
+        - { src: .Xresources, dest: .Xresources }
         - { src: .config/fish, dest: .config/fish }
         - { src: .config/i3, dest: .config/i3 }
         - { src: .config/nvim, dest: .config/nvim }
         - { src: .config/polybar, dest: .config/polybar }
         - { src: .config/terminator, dest: .config/terminator }
 
+    - name: Add apt-key for NodeJS
+      become_user: root
+      apt_key:
+        url: https://deb.nodesource.com/gpgkey/nodesource.gpg.key
+        state: present
+
+    - name: Add NodeJS LTS apt repo
+      become_user: root
+      apt_repository:
+        repo: "deb https://deb.nodesource.com/ bullseye main"
+        update_cache: yes
+
+    - name: Install NodeJS 
+      become_user: root
+      apt:
+        name: nodejs
+        state: present
+
+    - name: Add apt-key for Yarn
+      become_user: root
+      apt_key:
+        url: https://dl.yarnpkg.com/debian/pubkey.gpg
+        state: present
+
+    - name: Add Yarn apt repo
+      become_user: root
+      apt_repository:
+        repo: "deb https://dl.yarnpkg.com/debian/ stable main"
+        update_cache: yes
+
+    - name: Install Yarn 
+      become_user: root
+      apt:
+        name: yarn
+        state: present
+
+    - name: Add apt-key for Docker
+      become_user: root
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/debian/gpg
+        state: present
+
+    - name: Add Docker repository
+      become_user: root
+      apt_repository:
+        repo: deb https://download.docker.com/linux/debian bullseye stable
+        state: present
+
+    - name: Install docker-ce
+      become_user: root
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
     - name: Add {{ username }} to the Docker group
+      become_user: root
       user:
         name: '{{ username }}'
         groups: docker
@@ -59,13 +114,19 @@
         name: docker.service
         enabled: yes
 
-    - name: Change shell to fish
-      become: yes
+    - name: Change user {{ username }} shell to fish
+      become_user: root
       user:
         name: "{{ username }}"
         shell: /usr/bin/fish
 
-    - name: Generate an OpenSSH keypair with the default values (4096 bits, rsa)
+    - name: Create .ssh directory if it does not exist
+      file:
+        path: $HOME/.ssh
+        state: directory
+        mode: '0755'
+
+    - name: Generate an OpenSSH keypair
       community.crypto.openssh_keypair:
         path: $HOME/.ssh/evan_id_ssh_rsa
         type: ed25519
