@@ -1,7 +1,8 @@
 ---
 - hosts: localhost
   connection: local
-  become: no
+  become: yes
+  become_user: evan
   vars:
     username: "{{ ansible_user_id }}"
 
@@ -29,10 +30,21 @@
           - docker
         state: present
 
-    - name: Stow dotfiles in /home/{{ username }}
-      shell: "stow -v -t /home/{{ username }} *"
-      args:
-        chdir: configuration
+    - name: Link dotsfiles in $HOME
+      file:
+        src: "{{ playbook_dir }}/configuration/{{ item.src }}"
+        dest: $HOME/{{ item.dest }}
+        follow: yes
+        force: yes
+        state: link
+      loop:
+        - { src: .gitconfig, dest: .gitconfig }
+        - { src: .xprofile, dest: .xprofile }
+        - { src: .config/fish, dest: .config/fish }
+        - { src: .config/i3, dest: .config/i3 }
+        - { src: .config/nvim, dest: .config/nvim }
+        - { src: .config/polybar, dest: .config/polybar }
+        - { src: .config/terminator, dest: .config/terminator }
 
     - name: Add {{ username }} to the Docker group
       user:
