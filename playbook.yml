@@ -64,4 +64,9 @@
         name: "{{ username }}"
         shell: /usr/bin/fish
 
+    - name: Generate an OpenSSH keypair with the default values (4096 bits, rsa)
+      community.crypto.openssh_keypair:
+        path: $HOME/.ssh/evan_id_ssh_rsa
+        type: ed25519
+
 
