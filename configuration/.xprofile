@@ -1,2 +1,1 @@
-xrandr --output DP-4 --rotate normal --mode 2560x1440 --rate 144.00 --primary
-xrandr --output DP-2 --rotate right --right-of DP-4
+xrandr --output DVI-D-0 --off --output HDMI-0 --off --output DP-0 --off --output DP-1 --off --output DP-2 --mode 2560x1440 --pos 2560x0 --rotate right --output DP-3 --off --output DP-4 --primary --mode 2560x1440 --pos 0x771 --rotate normal --rate 144.00 --output DP-5 --off

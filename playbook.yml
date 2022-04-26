@@ -17,6 +17,7 @@
           - nvidia
           - i3-wm
           - lightdm 
+          - rofi
           - terminator
           - cmake
           - clang
