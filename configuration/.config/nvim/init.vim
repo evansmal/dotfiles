@@ -42,7 +42,6 @@ Plug 'tpope/vim-surround'
 " Search
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
-Plug 'airblade/vim-rooter'
 
 " Initialize plugin system
 call plug#end()
@@ -329,4 +328,6 @@ command! -bang -nargs=* GGrep
   \   fzf#vim#with_preview({'dir': systemlist('git rev-parse --show-toplevel')[0]}), <bang>0)
 
 command! -bang PFiles call fzf#vim#files('~/Projects', <bang>0)
+
+lua require('init')
 
