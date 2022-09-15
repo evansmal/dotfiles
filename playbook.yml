@@ -13,6 +13,8 @@
       apt:
         name: 
           - curl
+          - fzp
+          - ripgrep
           - git 
           - htop 
           - fish
