@@ -18,6 +18,4 @@ setenv LESS_TERMCAP_us \e'[04;38;5;146m' # begin underline
 alias mcss-r "cd ~/Projects/mcss-docker/scripts; and ./run"
 alias mcss-x "cd ~/Projects/mcss-docker/scripts; and ./exec"
 
-fish_add_path /home/$USER/.local/bin
-
 fish_vi_key_bindings
