@@ -4,8 +4,9 @@
 [profiles]
   [[default]]
     cursor_color = "#aaaaaa"
-    font = Fira Code weight=453 15
+    font = Monoid Light Semi-Condensed 16
     foreground_color = "#ffffff"
+    scrollback_lines = 90000
     use_system_font = False
 [layouts]
   [[default]]

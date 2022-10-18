@@ -1,8 +1,9 @@
 {
     "suggest.timeout": 500,
     "suggest.maxCompleteItemCount": 15,
+    "suggest.noselect": true,
     "signature.enable": true,
-    "suggest.triggerCompletionWait": 100,
+    "suggest.triggerCompletionWait": 40,
     "coc.preferences.rootPatterns": [
         "package.json"
     ],
@@ -14,7 +15,7 @@
         "-pch-storage=memory"
     ],
     "clangd.enabled": true,
-    "clangd.path": "~/.config/coc/extensions/coc-clangd-data/install/13.0.0/clangd_13.0.0/bin/clangd",
+    "clangd.path": "clangd",
     "typescript.preferences.quoteStyle": "double",
     "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": true,
     "languageserver": {
@@ -30,5 +31,6 @@
             "initializationOptions": {},
             "settings": {}
         }
-    }
+    },
+    "python.pythonPath": "python3"
 }
