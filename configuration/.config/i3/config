@@ -178,5 +178,9 @@ mode "resize" {
 
 bindsym $mod+r mode "resize"
 
+for_window [class="^.*"] border pixel 0
+
+bindsym Mod1+Tab workspace back_and_forth
+
 exec_always --no-startup-id $HOME/.config/polybar/launch.sh
 
