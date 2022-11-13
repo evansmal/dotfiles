@@ -1,6 +1,6 @@
 {
     "suggest.timeout": 500,
-    "suggest.maxCompleteItemCount": 15,
+    "suggest.maxCompleteItemCount": 30,
     "suggest.noselect": true,
     "signature.enable": true,
     "suggest.triggerCompletionWait": 40,
