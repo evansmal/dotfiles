@@ -30,6 +30,12 @@ Plug 'josa42/coc-sh'
 Plug 'leafgarland/typescript-vim'
 Plug 'jackguo380/vim-lsp-cxx-highlight'
 Plug 'vim-scripts/DoxygenToolkit.vim'
+Plug 'posva/vim-vue'
+
+Plug 'heavenshell/vim-jsdoc', {
+  \ 'for': ['javascript', 'javascript.jsx','typescript'],
+  \ 'do': 'make install'
+\}
 
 " Tools for markdown
 Plug 'godlygeek/tabular'
@@ -38,6 +44,7 @@ Plug 'preservim/vim-markdown'
 
 " Formatting tools
 Plug 'tpope/vim-surround'
+Plug 'tpope/vim-repeat'
 
 " Search
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
