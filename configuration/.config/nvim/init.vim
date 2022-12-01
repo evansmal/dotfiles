@@ -387,3 +387,7 @@ command! -bang PFiles call fzf#vim#files('~/Projects', <bang>0)
 
 lua require('init')
 
+let g:opamshare = substitute(system('opam var share'),'\n$','','''')
+execute "set rtp+=" . g:opamshare . "/merlin/vim"
+
+set mouse=a

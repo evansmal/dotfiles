@@ -19,3 +19,6 @@ alias mcss-r "cd ~/Projects/mcss-docker/scripts; and ./run"
 alias mcss-x "cd ~/Projects/mcss-docker/scripts; and ./exec"
 
 fish_vi_key_bindings
+
+# opam configuration
+source /home/evan/.opam/opam-init/init.fish > /dev/null 2> /dev/null; or true
