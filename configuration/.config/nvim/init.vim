@@ -46,6 +46,8 @@ Plug 'preservim/vim-markdown'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
 
+Plug 'tpope/vim-fugitive'
+
 " Search
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
@@ -71,10 +73,7 @@ let g:airline_theme='tomorrow'
 
 " Setup colorscheme
 colorscheme Tomorrow-Night-Bright
-
-if has('nvim') || has('termguicolors')
-  set termguicolors
-endif
+set termguicolors
 
 " Set spelling language and text encoding
 set encoding=utf-8
@@ -273,16 +272,6 @@ omap ic <Plug>(coc-classobj-i)
 xmap ac <Plug>(coc-classobj-a)
 omap ac <Plug>(coc-classobj-a)
 
-" Remap <C-f> and <C-b> for scroll float windows/popups.
-if has('nvim-0.4.0') || has('patch-8.2.0750')
-  nnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
-  nnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
-  inoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(1)\<cr>" : "\<Right>"
-  inoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? "\<c-r>=coc#float#scroll(0)\<cr>" : "\<Left>"
-  vnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
-  vnoremap <silent><nowait><expr> <C-b> coc#float#has_scroll() ? coc#float#scroll(0) : "\<C-b>"
-endif
-
 " Use CTRL-S for selections ranges.
 " Requires 'textDocument/selectionRange' support of language server.
 nmap <silent> <C-s> <Plug>(coc-range-select)
@@ -390,3 +379,7 @@ lua require('init')
 autocmd BufRead,BufNewFile *.ml,*.mli  let g:opamshare = substitute(system('opam var share'),'\n$','','''') | execute "set rtp+=" . g:opamshare . "/merlin/vim"
 
 set mouse=a
+
+" Make inlays gray instead of white so they are easier to see
+hi CocInlayHint guibg=None guifg=Gray ctermbg=Red ctermfg=Blue
+
