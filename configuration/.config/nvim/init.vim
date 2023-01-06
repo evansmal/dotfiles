@@ -16,8 +16,6 @@ Plug 'flazz/vim-colorschemes'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 
-" Auto bracket closing
-Plug 'jiangmiao/auto-pairs'
 
 "Linting and autocomplete
 Plug 'neoclide/coc.nvim', {'branch': 'master', 'do': 'yarn install --frozen-lockfile'}
@@ -47,8 +45,9 @@ Plug 'tpope/vim-surround'
 Plug 'tpope/vim-repeat'
 
 " Search
-Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
-Plug 'junegunn/fzf.vim'
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+Plug 'nvim-lua/plenary.nvim'
+Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.0' }
 
 " Initialize plugin system
 call plug#end()
@@ -163,7 +162,7 @@ set nowritebackup
 set cmdheight=2
 
 " Smaller updatetime for CursorHold & CursorHoldI
-set updatetime=300
+set updatetime=50
 
 " Always show the signcolumn, otherwise it would shift the text each time
 " diagnostics appear/become resolved.
@@ -390,3 +389,5 @@ lua require('init')
 autocmd BufRead,BufNewFile *.ml,*.mli  let g:opamshare = substitute(system('opam var share'),'\n$','','''') | execute "set rtp+=" . g:opamshare . "/merlin/vim"
 
 set mouse=a
+
+nnoremap <leader>ff <cmd>Telescope find_files<cr>
