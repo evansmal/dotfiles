@@ -1,6 +1,6 @@
-function SetColor(color)
-	color = color or "rose-pine"
-	vim.cmd.colorscheme(color)
+function SetColor()
+    vim.cmd [[ set background=dark ]]
+    vim.cmd[[colorscheme no-clown-fiesta]]
 end
 
 SetColor()
