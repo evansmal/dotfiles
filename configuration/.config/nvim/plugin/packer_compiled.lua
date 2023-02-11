@@ -122,6 +122,11 @@ _G.packer_plugins = {
     path = "/home/evan/.local/share/nvim/site/pack/packer/start/vim-fugitive",
     url = "https://github.com/tpope/vim-fugitive"
   },
+  ["vim-lastplace"] = {
+    loaded = true,
+    path = "/home/evan/.local/share/nvim/site/pack/packer/start/vim-lastplace",
+    url = "https://github.com/farmergreg/vim-lastplace"
+  },
   ["vim-repeat"] = {
     loaded = true,
     path = "/home/evan/.local/share/nvim/site/pack/packer/start/vim-repeat",
