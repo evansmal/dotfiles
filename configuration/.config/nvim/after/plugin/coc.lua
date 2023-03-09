@@ -144,9 +144,6 @@ vim.api.nvim_create_user_command("Format", "call CocAction('format')", {})
 vim.api.nvim_create_user_command("Prettier", "CocCommand prettier.formatFile", { nargs = 0, bang = true })
 
 
--- " Add `:Fold` command to fold current buffer
-vim.api.nvim_create_user_command("Fold", "call CocAction('fold', <f-args>)", {nargs = '?'})
-
 -- Add `:OR` command for organize imports of the current buffer
 vim.api.nvim_create_user_command("OR", "call CocActionAsync('runCommand', 'editor.action.organizeImport')", {})
 
