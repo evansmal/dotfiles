@@ -44,5 +44,6 @@
             "settings": {}
         }
     },
-    "python.pythonPath": "python3"
+    "python.pythonPath": "python3",
+    "python.formatting.provider": "black",
 }
