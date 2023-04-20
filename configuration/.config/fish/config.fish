@@ -15,8 +15,16 @@ setenv LESS_TERMCAP_so \e'[38;5;246m'    # begin standout-mode - info box
 setenv LESS_TERMCAP_ue \e'[0m'           # end underline
 setenv LESS_TERMCAP_us \e'[04;38;5;146m' # begin underline
 
-alias mcss-r "cd ~/Projects/mcss-docker/scripts; and ./run"
-alias mcss-x "cd ~/Projects/mcss-docker/scripts; and ./exec"
+alias mcss-r "$HOME/Projects/mcss-docker/scripts/run"
+alias mcss-x "$HOME/Projects/mcss-docker/scripts/exec"
+
+alias conf-display-work "$HOME/.screenlayout/work.sh"
+
+alias gc "git checkout"
+alias gs "git status"
+alias gd "git diff"
+alias ga "git add"
+alias gap "git add -p"
 
 fish_vi_key_bindings
 
