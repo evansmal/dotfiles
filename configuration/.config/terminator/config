@@ -5,7 +5,7 @@
 [profiles]
   [[default]]
     cursor_color = "#aaaaaa"
-    font = Monoid Light Semi-Condensed 16
+    font = Berkeley Mono 17
     foreground_color = "#ffffff"
     scrollback_lines = 90000
     use_system_font = False
