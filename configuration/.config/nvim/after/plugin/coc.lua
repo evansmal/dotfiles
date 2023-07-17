@@ -140,8 +140,8 @@ keyset("x", "<C-s>", "<Plug>(coc-range-select)", {silent = true})
 
 
 -- Add `:Format` command to format current buffer
-vim.api.nvim_create_user_command("Format", "call CocAction('format')", {})
-vim.api.nvim_create_user_command("Prettier", "CocCommand prettier.formatFile", { nargs = 0, bang = true })
+vim.api.nvim_create_user_command("F", "call CocAction('format')", {})
+vim.api.nvim_create_user_command("P", "CocCommand prettier.formatFile", { nargs = 0, bang = true })
 
 
 -- Add `:OR` command for organize imports of the current buffer

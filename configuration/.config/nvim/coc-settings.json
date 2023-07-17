@@ -28,7 +28,7 @@
         "${workspaceFolder}/Build/x86_64"
     ],
     "clangd.enabled": true,
-    "clangd.path": "clangd-15",
+    "clangd.path": "clangd-16",
     "typescript.preferences.quoteStyle": "double",
     "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": true,
     "languageserver": {
