@@ -24,11 +24,9 @@
         "--log=info",
         "--clang-tidy"
     ],
-    "clangd.compilationDatabaseCandidates": [
-        "${workspaceFolder}/Build/x86_64"
-    ],
     "clangd.enabled": true,
     "clangd.path": "clangd-16",
+    "clangd.disableSnippetCompletion": true,
     "typescript.preferences.quoteStyle": "double",
     "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": true,
     "languageserver": {
