@@ -1,0 +1,12 @@
+HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
+setopt EXTENDED_HISTORY
+SAVEHIST=5000
+HISTSIZE=2000
+setopt HIST_EXPIRE_DUPS_FIRST 
+setopt HIST_IGNORE_DUPS
+setopt HIST_FIND_NO_DUPS
+setopt HIST_REDUCE_BLANKS
+
+PROMPT='%B%F{240}%4~%f%b %# '
+
+path+=("$HOME/.local/bin")
