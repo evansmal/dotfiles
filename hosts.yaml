@@ -2,3 +2,17 @@ yyz:
   hosts:
     yyzeon04:
     yyzeon09:
+
+yyzgalaxy:
+  hosts:
+    yyz-lab-78:
+
+aus:
+  hosts:
+    aus-glx-01:
+    aus-glx-02:
+    aus-glx-04:
+    aus-glx-05:
+    aus-glx-06:
+    aus-glx-07:
+

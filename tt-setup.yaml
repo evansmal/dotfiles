@@ -1,5 +1,5 @@
 ---
-- hosts: yyz
+- hosts: all
   gather_facts: yes
   vars:
     nodejs_version: "v16.18.0"
@@ -22,7 +22,7 @@
             path: "{{ nodejs_install_dir }}"
             state: directory
 
-        - name: Remove old verison of node NodeJS tarball
+        - name: Remove old verison of NodeJS
           file:
             path: "{{ nodejs_install_dir }}/node"
             state: absent
@@ -48,10 +48,6 @@
     - name: Install Neovim
       tags: nvim
       block:
-        - name: Check if NodeJS is installed
-          command: which node
-          changed_when: no
-          check_mode: no
 
         - name: Create local directory for Neovim
           file:
@@ -89,7 +85,7 @@
             compress: yes
 
         - name: Install Neovim plugins
-          ansible.builtin.shell: nvim --headless "+Lazy! sync" +qa
+          ansible.builtin.shell: '{{ ansible_env.HOME }}/.local/bin/nvim --headless "+Lazy! sync" +qa'
 
 
     - name: Setup development environment
@@ -120,6 +116,22 @@
           ansible.builtin.git:
             repo: "git@yyz-gitlab.local.tenstorrent.com:tenstorrent/pybuda.git"
             dest: "/localdev/{{ ansible_user_id }}/pybuda"
+            single_branch: yes
+            version: main
+            update: no
+            recursive: yes
+
+    - name: Clone TT-Metallium
+      tags: metal
+      block:
+        - name: Create TT-Metallium parent directory
+          file:
+            path: "/localdev/{{ ansible_user_id }}/tt-metal"
+            state: directory
+        - name: Clone TT-Metallium into /localdev/{{ ansible_user_id }}
+          ansible.builtin.git:
+            repo: "git@github.com:tenstorrent-metal/tt-metal.git"
+            dest: "/localdev/{{ ansible_user_id }}/tt-metal"
             single_branch: yes
             version: main
             update: no
