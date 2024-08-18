@@ -7,6 +7,8 @@
     nodejs_install_dir: "{{ ansible_env.HOME }}/.local/bin"
     nvim_config_source_dir: "configuration/.config/nvim"
     nvim_config_dest_dir: "{{ ansible_env.HOME }}/.config"
+    tmux_config_source_dir: "configuration/.tmux.conf"
+    tmux_config_dest_dir: "{{ ansible_env.HOME }}"
     pybuda_git_url: "git@yyz-gitlab.local.tenstorrent.com:tenstorrent/pybuda.git"
   tasks:
     - name: Install NodeJS
@@ -76,10 +78,18 @@
             path: "{{ ansible_env.HOME }}/.config"
             state: directory
 
-        - name: Synchronize configuration files
+        - name: Synchronize Neovim configuration files
           ansible.posix.synchronize:
             src: "{{ nvim_config_source_dir }}"
             dest: "{{ nvim_config_dest_dir }}"
+            delete: yes
+            recursive: yes
+            compress: yes
+
+        - name: Synchronize tmux configuration files
+          ansible.posix.synchronize:
+            src: "{{ tmux_config_source_dir }}"
+            dest: "{{ tmux_config_dest_dir }}"
             delete: yes
             recursive: yes
             compress: yes
@@ -105,22 +115,6 @@
             dest: "/home/{{ ansible_user_id }}/src"
             state: link
 
-    - name: Clone PyBuda
-      tags: pybuda
-      block:
-        - name: Create PyBuda parent directory
-          file:
-            path: "/localdev/{{ ansible_user_id }}/pybuda"
-            state: directory
-        - name: Clone PyBuda into /localdev/{{ ansible_user_id }}
-          ansible.builtin.git:
-            repo: "git@yyz-gitlab.local.tenstorrent.com:tenstorrent/pybuda.git"
-            dest: "/localdev/{{ ansible_user_id }}/pybuda"
-            single_branch: yes
-            version: main
-            update: no
-            recursive: yes
-
     - name: Clone TT-Metallium
       tags: metal
       block:
@@ -130,13 +124,31 @@
             state: directory
         - name: Clone TT-Metallium into /localdev/{{ ansible_user_id }}
           ansible.builtin.git:
-            repo: "git@github.com:tenstorrent-metal/tt-metal.git"
+            repo: "git@github.com:tenstorrent/tt-metal.git"
             dest: "/localdev/{{ ansible_user_id }}/tt-metal"
             single_branch: yes
             version: main
             update: no
             recursive: yes
         
+
+    - name: Synchronize configurations
+      tags: config
+      block:
+        - name: Synchronize Neovim configuration files
+          ansible.posix.synchronize:
+            src: "{{ nvim_config_source_dir }}"
+            dest: "{{ nvim_config_dest_dir }}"
+            delete: yes
+            recursive: yes
+            compress: yes
+        - name: Synchronize tmux configuration files
+          ansible.posix.synchronize:
+            src: "{{ tmux_config_source_dir }}"
+            dest: "{{ tmux_config_dest_dir }}"
+            delete: yes
+            recursive: yes
+            compress: yes
 
   environment:
     PATH: "/usr/bin:{{ ansible_env.PATH }}"
