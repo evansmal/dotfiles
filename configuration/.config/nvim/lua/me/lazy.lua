@@ -1,6 +1,6 @@
-require("lazy").setup({
+return {
     {
-        "neoclide/coc.nvim", 
+        "neoclide/coc.nvim",
         branch = 'release'
     },
     "tpope/vim-surround",
@@ -10,25 +10,25 @@ require("lazy").setup({
     "aktersnurra/no-clown-fiesta.nvim",
     "dstein64/vim-startuptime",
     {
-        "nvim-treesitter/nvim-treesitter", 
+        "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate"
     },
     {
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",
-        config = function () 
-          local configs = require("nvim-treesitter.configs")
+        config = function()
+            local configs = require("nvim-treesitter.configs")
 
-          configs.setup({
-              ensure_installed = { "lua", "vim", "vimdoc"},
-              sync_install = false,
-              highlight = { enable = true },
-              indent = { enable = true },  
+            configs.setup({
+                ensure_installed = { "lua", "vim", "vimdoc" },
+                sync_install = false,
+                highlight = { enable = true },
+                indent = { enable = true },
             })
         end
     },
     {
         "nvim-lualine/lualine.nvim",
         dependencies = { "nvim-tree/nvim-web-devicons" }
-    }
-})
+    },
+}
