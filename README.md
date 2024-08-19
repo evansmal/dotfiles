@@ -23,3 +23,9 @@ Once SSH keys are setup you switch to the ssh remote:
 ```sh
 git remote set-url git@github.com:evansmal/dotfiles.git
 ```
+
+## Setting up remote development machine
+
+```sh
+ansible-playbook -i hosts.yaml work.yaml -u esmal -t <TAGS>
+```
