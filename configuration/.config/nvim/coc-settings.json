@@ -3,7 +3,7 @@
     "suggest.maxCompleteItemCount": 30,
     "suggest.noselect": true,
     "signature.enable": true,
-    "suggest.triggerCompletionWait": 40,
+    "suggest.triggerCompletionWait": 30,
     "suggest.floatConfig": {
         "border": false,
         "shadow": true,
@@ -43,5 +43,12 @@
         }
     },
     "python.pythonPath": "python3",
-    "python.formatting.provider": "black"
+    "python.formatting.provider": "black",
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.useLibraryCodeForTypes": true,
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    "pyright.inlayHints.functionReturnTypes": false,
+    "pyright.inlayHints.variableTypes": false,
+    "pyright.inlayHints.parameterTypes": false
 }
+
