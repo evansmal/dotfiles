@@ -126,7 +126,7 @@
           ansible.builtin.git:
             repo: "git@github.com:tenstorrent/tt-metal.git"
             dest: "/localdev/{{ ansible_user_id }}/tt-metal"
-            single_branch: yes
+            single_branch: no
             version: main
             update: no
             recursive: yes

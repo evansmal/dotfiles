@@ -1,4 +1,5 @@
 require('lualine').setup {
+    lazy= true,
   options = {
     icons_enabled = false,
     theme = 'auto',
