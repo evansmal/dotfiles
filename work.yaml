@@ -58,7 +58,7 @@
 
         - name: Download Neovim
           get_url:
-            url: https://github.com/neovim/neovim/releases/download/stable/nvim-linux64.tar.gz
+            url: https://github.com/neovim/neovim/releases/download/v0.11.2/nvim-linux-x86_64.tar.gz
             dest: "/tmp/nvim-linux64.tar.gz"
 
         - name: Extract Neovim
@@ -149,6 +149,57 @@
             delete: yes
             recursive: yes
             compress: yes
+
+    - name: Ensure bashrc has proper history settings
+      tags: bashrc
+      block:
+        - name: Ensure HISTSIZE=50000 is set
+          lineinfile:
+            path: "{{ ansible_env.HOME }}/.bashrc"
+            regexp: '^HISTSIZE='
+            line: 'HISTSIZE=50000'
+            state: present
+            insertafter: EOF
+
+        - name: Ensure HISTFILESIZE=1000000 is set
+          lineinfile:
+            path: "{{ ansible_env.HOME }}/.bashrc"
+            regexp: '^HISTFILESIZE='
+            line: 'HISTFILESIZE=1000000'
+            state: present
+            insertafter: EOF
+
+        - name: Ensure shopt -s histappend is set
+          lineinfile:
+            path: "{{ ansible_env.HOME }}/.bashrc"
+            regexp: '^shopt -s histappend'
+            line: 'shopt -s histappend'
+            state: present
+            insertafter: EOF
+
+    - name: Install FZF 
+      tags: fzf
+      block:
+        - name: Clone the fzf repository
+          ansible.builtin.git:
+            repo: "https://github.com/junegunn/fzf.git"
+            dest: "{{ ansible_env.HOME }}/.fzf"
+            version: master
+            depth: 1
+
+        - name: Run the fzf install script
+          ansible.builtin.shell: "{{ ansible_env.HOME }}/.fzf/install --all --no-bashrc"
+          args:
+            chdir: "{{ ansible_env.HOME }}/.fzf"
+          # Note: --all and --no-bashrc prevent interactive prompts and changes to ~/.bashrc
+
+        - name: Ensure eval \"$(fzf --bash)\" is in bashrc
+          ansible.builtin.lineinfile:
+            path: "{{ ansible_env.HOME }}/.bashrc"
+            regexp: '^eval.*fzf --bash'
+            line: 'eval "$(fzf --bash)"'
+            state: present
+            insertafter: EOF
 
   environment:
     PATH: "/usr/bin:{{ ansible_env.PATH }}"
