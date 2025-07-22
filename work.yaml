@@ -9,48 +9,69 @@
     nvim_config_dest_dir: "{{ ansible_env.HOME }}/.config"
     tmux_config_source_dir: "configuration/.tmux.conf"
     tmux_config_dest_dir: "{{ ansible_env.HOME }}"
-    pybuda_git_url: "git@yyz-gitlab.local.tenstorrent.com:tenstorrent/pybuda.git"
+    ird_config_source_dir: "configuration/.ird"
+    ird_config_dest_dir: "{{ ansible_env.HOME }}/.ird"
   tasks:
+    - name: Pre-flight system checks
+      tags: always
+      block:
+        - name: Check available disk space
+          shell: df -h {{ ansible_env.HOME }} | tail -1 | awk '{print $4}'
+          register: available_space
+          
+        - name: Ensure sufficient disk space
+          fail:
+            msg: "Insufficient disk space. Available: {{ available_space.stdout }}"
+          when: available_space.stdout|regex_replace('[^0-9]', '')|int < 1
+
     - name: Install NodeJS
       tags: install-node
       block:
-        - name: Download NodeJS
-          get_url:
-            url: "{{ nodejs_download_url }}"
-            dest: "/tmp/node-{{ nodejs_version }}-linux-x64.tar.xz"
+        - name: Check if NodeJS is already installed
+          command: "{{ nodejs_install_dir }}/node --version"
+          register: nodejs_current_version
+          ignore_errors: yes
+          changed_when: false
 
-        - name: Create NodeJS install directory
-          file:
-            path: "{{ nodejs_install_dir }}"
-            state: directory
+        - name: Install NodeJS
+          when: nodejs_current_version.failed or nodejs_current_version.stdout != nodejs_version
+          block:
+            - name: Download NodeJS
+              get_url:
+                url: "{{ nodejs_download_url }}"
+                dest: "/tmp/node-{{ nodejs_version }}-linux-x64.tar.xz"
 
-        - name: Remove old verison of NodeJS
-          file:
-            path: "{{ nodejs_install_dir }}/node"
-            state: absent
+            - name: Create NodeJS install directory
+              file:
+                path: "{{ nodejs_install_dir }}"
+                state: directory
 
-        - name: Extract NodeJS
-          unarchive:
-            src: "/tmp/node-{{ nodejs_version }}-linux-x64.tar.xz"
-            dest: "{{ ansible_env.HOME }}/.local"
-            remote_src: yes
-            extra_opts: [--strip-components=1]
+            - name: Remove old verison of NodeJS
+              file:
+                path: "{{ nodejs_install_dir }}/node"
+                state: absent
 
-        - name: Cleanup NodeJS tarball
-          file:
-            path: "/tmp/node-{{ nodejs_version }}-linux-x64.tar.xz"
-            state: absent
+            - name: Extract NodeJS
+              unarchive:
+                src: "/tmp/node-{{ nodejs_version }}-linux-x64.tar.xz"
+                dest: "{{ ansible_env.HOME }}/.local"
+                remote_src: yes
+                extra_opts: [--strip-components=1]
 
-        - name: Add NodeJS to PATH in .bashrc
-          lineinfile:
-            path: "{{ ansible_env.HOME }}/.bashrc"
-            line: 'export PATH="$PATH:{{ nodejs_install_dir }}"'
-            create: yes
+            - name: Cleanup NodeJS tarball
+              file:
+                path: "/tmp/node-{{ nodejs_version }}-linux-x64.tar.xz"
+                state: absent
+
+            - name: Add NodeJS to PATH in .bashrc
+              lineinfile:
+                path: "{{ ansible_env.HOME }}/.bashrc"
+                line: 'export PATH="$PATH:{{ nodejs_install_dir }}"'
+                create: yes
 
     - name: Install Neovim
       tags: install-nvim
       block:
-
         - name: Create local directory for Neovim
           file:
             path: "{{ ansible_env.HOME }}/.local"
@@ -149,6 +170,14 @@
             delete: yes
             recursive: yes
             compress: yes
+        - name: Synchronize ird configuration files
+          ansible.posix.synchronize:
+            src: "{{ ird_config_source_dir }}"
+            dest: "{{ ird_config_dest_dir }}"
+            delete: yes
+            recursive: yes
+            compress: yes
+
 
     - name: Ensure bashrc has proper history settings
       tags: bashrc
