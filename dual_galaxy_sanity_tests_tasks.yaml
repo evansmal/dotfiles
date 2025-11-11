@@ -1,0 +1,270 @@
+---
+# Hardware sanity tests tasks for dual galaxy (for import)
+- name: Check if tt-metal repository exists
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user_id }}/wa/tt-metal/.git"
+  register: tt_metal_repo
+
+- name: Fail if tt-metal repository does not exist
+  ansible.builtin.fail:
+    msg: "tt-metal repository not found at /home/{{ ansible_user_id }}/wa/tt-metal. Repository must be cloned before running sanity tests."
+  when: not tt_metal_repo.stat.exists
+
+- name: Check if tt-metal is built
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user_id }}/wa/tt-metal/build"
+  register: tt_metal_build
+
+- name: Fail if tt-metal is not built
+  ansible.builtin.fail:
+    msg: "tt-metal build directory not found at /home/{{ ansible_user_id }}/wa/tt-metal/build. Repository must be built before running sanity tests. Run './build_metal.sh -c --build-tests' to build."
+  when: not tt_metal_build.stat.exists
+
+- name: Check if source.sh exists
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user_id }}/wa/tt-metal/source.sh"
+  register: source_script
+
+- name: Fail if source.sh does not exist
+  ansible.builtin.fail:
+    msg: "source.sh not found at /home/{{ ansible_user_id }}/wa/tt-metal/source.sh. Cannot run sanity tests."
+  when: not source_script.stat.exists
+
+- name: Check if rank bindings file exists
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user_id }}/wa/tt-metal/tests/tt_metal/distributed/config/dual_galaxy_rank_bindings.yaml"
+  register: rank_bindings_file
+
+- name: Fail if rank bindings file does not exist
+  ansible.builtin.fail:
+    msg: "Rank bindings file not found at /home/{{ ansible_user_id }}/wa/tt-metal/tests/tt_metal/distributed/config/dual_galaxy_rank_bindings.yaml. Cannot run sanity tests."
+  when: not rank_bindings_file.stat.exists
+
+- name: Check if system health test binary exists
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user_id }}/wa/tt-metal/build/test/tt_metal/tt_fabric/test_system_health"
+  register: system_health_binary
+
+- name: Fail if system health test binary does not exist
+  ansible.builtin.fail:
+    msg: "System health test binary not found at /home/{{ ansible_user_id }}/wa/tt-metal/build/test/tt_metal/tt_fabric/test_system_health. Cannot run Intermesh test."
+  when: not system_health_binary.stat.exists
+
+- name: Starting Intermesh link configuration test
+  ansible.builtin.debug:
+    msg: "Running Intermesh link configuration test..."
+  when: source_script.stat.exists and system_health_binary.stat.exists
+
+- name: Run Intermesh link configuration test
+  ansible.builtin.shell: |
+    source source.sh
+    tt-run --rank-binding tests/tt_metal/distributed/config/dual_galaxy_rank_bindings.yaml --mpi-args "--host g14glx03,g14glx04 --map-by rankfile:file=/etc/mpirun/rankfile --mca btl self,tcp --mca btl_tcp_if_include cnx1 --bind-to none --tag-output" ./build/test/tt_metal/tt_fabric/test_system_health --gtest_filter="*Intermesh*"
+  args:
+    chdir: "/home/{{ ansible_user_id }}/wa/tt-metal"
+    executable: /bin/bash
+  when: source_script.stat.exists and rank_bindings_file.stat.exists and system_health_binary.stat.exists
+  timeout: 1800
+  register: intermesh_test_result
+  changed_when: false
+  failed_when: false
+  no_log: false
+
+- name: Display Intermesh test output
+  ansible.builtin.debug:
+    var: intermesh_test_result.stdout_lines
+  when: intermesh_test_result is defined
+
+- name: Check if output contains expected chips and links
+  ansible.builtin.set_fact:
+    intermesh_output_valid: "{{ intermesh_test_result.stdout is defined and ('Total chips with intermesh links: 8' in intermesh_test_result.stdout) and ('Total intermesh links: 32' in intermesh_test_result.stdout) }}"
+  when: intermesh_test_result is defined
+
+- name: Intermesh test pass
+  ansible.builtin.debug:
+    msg: "✅ PASS: Intermesh link configuration test - 8 chips with 4 links each (32 total links)"
+  when:
+    - intermesh_test_result is defined
+    - intermesh_test_result.rc is defined
+    - intermesh_test_result.rc == 0
+    - intermesh_output_valid | default(false) | bool
+  changed_when: false
+
+- name: Intermesh test fail
+  ansible.builtin.fail:
+    msg: "❌ FAIL: Intermesh link configuration test (exit code: {{ intermesh_test_result.rc }}) - Expected 8 chips with 4 links each (32 total links). Check output for details."
+  when:
+    - intermesh_test_result is defined
+    - intermesh_test_result.rc is defined
+    - (intermesh_test_result.rc != 0) or (intermesh_output_valid | default(false) | bool == false)
+
+- name: Starting Intermesh link test
+  ansible.builtin.debug:
+    msg: "Running Intermesh link test..."
+  when: source_script.stat.exists and system_health_binary.stat.exists
+
+- name: Run Intermesh link test
+  ansible.builtin.shell: |
+    source source.sh
+    tt-run --rank-binding tests/tt_metal/distributed/config/dual_galaxy_rank_bindings.yaml --mpi-args "--host g14glx03,g14glx04 --map-by rankfile:file=/etc/mpirun/rankfile --mca btl self,tcp --mca btl_tcp_if_include cnx1 --tag-output" ./build/test/tt_metal/tt_fabric/test_system_health --gtest_filter="Cluster.*Intermesh*"
+  args:
+    chdir: "/home/{{ ansible_user_id }}/wa/tt-metal"
+    executable: /bin/bash
+  when: source_script.stat.exists and rank_bindings_file.stat.exists and system_health_binary.stat.exists
+  timeout: 1800
+  register: intermesh_link_test_result
+  changed_when: false
+  failed_when: false
+  no_log: false
+
+- name: Display Intermesh link test output
+  ansible.builtin.debug:
+    var: intermesh_link_test_result.stdout_lines
+  when: intermesh_link_test_result is defined
+
+- name: Intermesh link test pass
+  ansible.builtin.debug:
+    msg: "✅ PASS: Intermesh link test"
+  when:
+    - intermesh_link_test_result is defined
+    - intermesh_link_test_result.rc is defined
+    - intermesh_link_test_result.rc == 0
+  changed_when: false
+
+- name: Intermesh link test fail
+  ansible.builtin.fail:
+    msg: "❌ FAIL: Intermesh link test (exit code: {{ intermesh_link_test_result.rc }})"
+  when:
+    - intermesh_link_test_result is defined
+    - intermesh_link_test_result.rc is defined
+    - intermesh_link_test_result.rc != 0
+
+- name: Starting basic hardware sanity test
+  ansible.builtin.debug:
+    msg: "Running basic hardware sanity test (echo 'hi')..."
+  when: source_script.stat.exists and rank_bindings_file.stat.exists
+
+- name: Run hardware sanity test
+  ansible.builtin.shell: |
+    source source.sh
+    tt-run --rank-binding tests/tt_metal/distributed/config/dual_galaxy_rank_bindings.yaml --mpi-args "--host g14glx03,g14glx04 --map-by rankfile:file=/etc/mpirun/rankfile --mca btl self,tcp --mca btl_tcp_if_include cnx1 --bind-to none --tag-output" echo "hi"
+  args:
+    chdir: "/home/{{ ansible_user_id }}/wa/tt-metal"
+    executable: /bin/bash
+  when: source_script.stat.exists and rank_bindings_file.stat.exists
+  timeout: 600
+  register: sanity_test_result
+  changed_when: false
+  no_log: false
+
+- name: Display sanity test output
+  ansible.builtin.debug:
+    var: sanity_test_result.stdout_lines
+  when: sanity_test_result is defined
+
+- name: Check if output contains expected pattern
+  ansible.builtin.set_fact:
+    output_valid: "{{ sanity_test_result.stdout is defined and (('[1,1]<stdout>: hi' in sanity_test_result.stdout) or ('[1,0]<stdout>: hi' in sanity_test_result.stdout)) }}"
+  when: sanity_test_result is defined
+
+- name: Validate sanity test output format
+  ansible.builtin.assert:
+    that:
+      - sanity_test_result.stdout is defined
+      - output_valid | default(false) | bool
+    fail_msg: "❌ FAIL: Basic hardware sanity test - output does not match expected format. Expected lines like '[1,1]<stdout>: hi' or '[1,0]<stdout>: hi'. Got: {{ sanity_test_result.stdout[:200] }}"
+    success_msg: "✅ PASS: Basic hardware sanity test"
+  when: sanity_test_result is defined
+  changed_when: false
+
+- name: Check if fabric 2d test config exists
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user_id }}/wa/tt-metal/tests/tt_metal/tt_metal/perf_microbenchmark/routing/test_dual_galaxy_fabric_2d_sanity.yaml"
+  register: fabric_2d_config
+
+- name: Check if fabric test binary exists
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user_id }}/wa/tt-metal/build/test/tt_metal/perf_microbenchmark/routing/test_tt_fabric"
+  register: fabric_test_binary
+
+- name: Fail if Fabric 2D test config does not exist
+  ansible.builtin.fail:
+    msg: "Fabric 2D test config not found at /home/{{ ansible_user_id }}/wa/tt-metal/tests/tt_metal/tt_metal/perf_microbenchmark/routing/test_dual_galaxy_fabric_2d_sanity.yaml. Cannot run Fabric 2D test."
+  when: not fabric_2d_config.stat.exists
+
+- name: Fail if fabric test binary does not exist
+  ansible.builtin.fail:
+    msg: "Fabric test binary not found at /home/{{ ansible_user_id }}/wa/tt-metal/build/test/tt_metal/perf_microbenchmark/routing/test_tt_fabric. Cannot run Fabric tests."
+  when: not fabric_test_binary.stat.exists
+
+- name: Run Fabric 2D sanity test
+  ansible.builtin.shell: |
+    source source.sh
+    tt-run --rank-binding tests/tt_metal/distributed/config/dual_galaxy_rank_bindings.yaml --mpi-args "--host g14glx03,g14glx04 --map-by rankfile:file=/etc/mpirun/rankfile --mca btl self,tcp --mca btl_tcp_if_include cnx1 --bind-to none --tag-output" ./build/test/tt_metal/perf_microbenchmark/routing/test_tt_fabric --test_config tests/tt_metal/tt_metal/perf_microbenchmark/routing/test_dual_galaxy_fabric_2d_sanity.yaml
+  args:
+    chdir: "/home/{{ ansible_user_id }}/wa/tt-metal"
+    executable: /bin/bash
+  when: source_script.stat.exists and rank_bindings_file.stat.exists and fabric_2d_config.stat.exists and fabric_test_binary.stat.exists
+  timeout: 1800
+  register: fabric_2d_result
+  changed_when: false
+  failed_when: false
+  no_log: false
+
+- name: Fabric 2D test pass
+  ansible.builtin.debug:
+    msg: "✅ PASS: Fabric 2D sanity test"
+  when:
+    - fabric_2d_result is defined
+    - fabric_2d_result.rc is defined
+    - fabric_2d_result.rc == 0
+  changed_when: false
+
+- name: Fabric 2D test fail
+  ansible.builtin.fail:
+    msg: "❌ FAIL: Fabric 2D sanity test (exit code: {{ fabric_2d_result.rc }})"
+  when:
+    - fabric_2d_result is defined
+    - fabric_2d_result.rc is defined
+    - fabric_2d_result.rc != 0
+
+- name: Check if fabric 1d test config exists
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user_id }}/wa/tt-metal/tests/tt_metal/tt_metal/perf_microbenchmark/routing/test_dual_galaxy_fabric_1d_sanity.yaml"
+  register: fabric_1d_config
+
+- name: Fail if Fabric 1D test config does not exist
+  ansible.builtin.fail:
+    msg: "Fabric 1D test config not found at /home/{{ ansible_user_id }}/wa/tt-metal/tests/tt_metal/tt_metal/perf_microbenchmark/routing/test_dual_galaxy_fabric_1d_sanity.yaml. Cannot run Fabric 1D test."
+  when: not fabric_1d_config.stat.exists
+
+- name: Run Fabric 1D sanity test
+  ansible.builtin.shell: |
+    source source.sh
+    tt-run --rank-binding tests/tt_metal/distributed/config/dual_galaxy_rank_bindings.yaml --mpi-args "--host g14glx03,g14glx04 --map-by rankfile:file=/etc/mpirun/rankfile --mca btl self,tcp --mca btl_tcp_if_include cnx1 --bind-to none --tag-output" ./build/test/tt_metal/perf_microbenchmark/routing/test_tt_fabric --test_config tests/tt_metal/tt_metal/perf_microbenchmark/routing/test_dual_galaxy_fabric_1d_sanity.yaml
+  args:
+    chdir: "/home/{{ ansible_user_id }}/wa/tt-metal"
+    executable: /bin/bash
+  when: source_script.stat.exists and rank_bindings_file.stat.exists and fabric_1d_config.stat.exists and fabric_test_binary.stat.exists
+  timeout: 1800
+  register: fabric_1d_result
+  changed_when: false
+  failed_when: false
+  no_log: false
+
+- name: Fabric 1D test pass
+  ansible.builtin.debug:
+    msg: "✅ PASS: Fabric 1D sanity test"
+  when:
+    - fabric_1d_result is defined
+    - fabric_1d_result.rc is defined
+    - fabric_1d_result.rc == 0
+  changed_when: false
+
+- name: Fabric 1D test fail
+  ansible.builtin.fail:
+    msg: "❌ FAIL: Fabric 1D sanity test (exit code: {{ fabric_1d_result.rc }})"
+  when:
+    - fabric_1d_result is defined
+    - fabric_1d_result.rc is defined
+    - fabric_1d_result.rc != 0
+

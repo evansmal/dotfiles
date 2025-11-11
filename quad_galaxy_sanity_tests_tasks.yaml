@@ -1,0 +1,78 @@
+---
+# Hardware sanity tests tasks for quad galaxy (for import)
+- name: Check if tt-metal repository exists
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user_id }}/wa/tt-metal/.git"
+  register: tt_metal_repo
+
+- name: Fail if tt-metal repository does not exist
+  ansible.builtin.fail:
+    msg: "tt-metal repository not found at /home/{{ ansible_user_id }}/wa/tt-metal. Repository must be cloned before running sanity tests."
+  when: not tt_metal_repo.stat.exists
+
+- name: Check if tt-metal is built
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user_id }}/wa/tt-metal/build"
+  register: tt_metal_build
+
+- name: Fail if tt-metal is not built
+  ansible.builtin.fail:
+    msg: "tt-metal build directory not found at /home/{{ ansible_user_id }}/wa/tt-metal/build. Repository must be built before running sanity tests. Run './build_metal.sh -c --build-tests' to build."
+  when: not tt_metal_build.stat.exists
+
+- name: Check if source.sh exists
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user_id }}/wa/tt-metal/source.sh"
+  register: source_script
+
+- name: Fail if source.sh does not exist
+  ansible.builtin.fail:
+    msg: "source.sh not found at /home/{{ ansible_user_id }}/wa/tt-metal/source.sh. Cannot run sanity tests."
+  when: not source_script.stat.exists
+
+- name: Check if rank bindings file exists
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user_id }}/wa/tt-metal/tests/tt_metal/distributed/config/quad_galaxy_rank_bindings.yaml"
+  register: rank_bindings_file
+
+- name: Fail if rank bindings file does not exist
+  ansible.builtin.fail:
+    msg: "Rank bindings file not found at /home/{{ ansible_user_id }}/wa/tt-metal/tests/tt_metal/distributed/config/quad_galaxy_rank_bindings.yaml. Cannot run sanity tests."
+  when: not rank_bindings_file.stat.exists
+
+- name: Starting quad galaxy sanity test
+  ansible.builtin.debug:
+    msg: "Running quad galaxy sanity test..."
+  when: source_script.stat.exists and rank_bindings_file.stat.exists
+
+- name: Run quad galaxy sanity test
+  ansible.builtin.shell: |
+    source source.sh
+    tt-run --rank-binding tests/tt_metal/distributed/config/quad_galaxy_rank_bindings.yaml --mpi-args "--host g05glx01,g05glx02,g05glx03,g05glx04 --map-by rankfile:file=/etc/mpirun/rankfile --mca btl self,tcp --mca btl_tcp_if_include cnx1 --bind-to none --tag-output" echo "hi"
+  args:
+    chdir: "/home/{{ ansible_user_id }}/wa/tt-metal"
+    executable: /bin/bash
+  when: source_script.stat.exists and rank_bindings_file.stat.exists
+  timeout: 600
+  register: quad_galaxy_test_result
+  changed_when: false
+  failed_when: false
+  no_log: false
+
+- name: Quad galaxy test pass
+  ansible.builtin.debug:
+    msg: "✅ PASS: Quad galaxy sanity test"
+  when:
+    - quad_galaxy_test_result is defined
+    - quad_galaxy_test_result.rc is defined
+    - quad_galaxy_test_result.rc == 0
+  changed_when: false
+
+- name: Quad galaxy test fail
+  ansible.builtin.fail:
+    msg: "❌ FAIL: Quad galaxy sanity test (exit code: {{ quad_galaxy_test_result.rc }})"
+  when:
+    - quad_galaxy_test_result is defined
+    - quad_galaxy_test_result.rc is defined
+    - quad_galaxy_test_result.rc != 0
+

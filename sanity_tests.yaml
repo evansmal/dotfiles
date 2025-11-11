@@ -1,0 +1,10 @@
+---
+- hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Import sanity test tasks
+      ansible.builtin.import_tasks: dual_galaxy_sanity_tests_tasks.yaml
+
+  environment:
+    PATH: "/usr/bin:{{ ansible_env.PATH }}"
+

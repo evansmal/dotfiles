@@ -2,7 +2,7 @@
 - hosts: all
   gather_facts: yes
   vars:
-    nodejs_version: "v20.16.0"
+    nodejs_version: "v24.11.0"
     nodejs_download_url: "https://nodejs.org/dist/{{ nodejs_version }}/node-{{ nodejs_version }}-linux-x64.tar.xz"
     nodejs_install_dir: "{{ ansible_env.HOME }}/.local/bin"
     nvim_config_source_dir: "configuration/.config/nvim"
@@ -21,11 +21,34 @@
         - name: Check available disk space
           shell: df -h {{ ansible_env.HOME }} | tail -1 | awk '{print $4}'
           register: available_space
+          changed_when: false
           
         - name: Ensure sufficient disk space
           fail:
             msg: "Insufficient disk space. Available: {{ available_space.stdout }}"
           when: available_space.stdout|regex_replace('[^0-9]', '')|int < 1
+
+        - name: Check required tools are installed
+          ansible.builtin.command:
+            cmd: "which {{ item }}"
+          register: tool_check
+          failed_when: tool_check.rc != 0
+          loop:
+            - git
+            - python3
+            - bash
+          changed_when: false
+
+        - name: Validate SSH key file exists if provided
+          ansible.builtin.stat:
+            path: "{{ tt_metal_ssh_key }}"
+          register: ssh_key_stat
+          when: tt_metal_ssh_key is defined and tt_metal_ssh_key != ""
+
+        - name: Fail if SSH key file does not exist
+          ansible.builtin.fail:
+            msg: "SSH key file not found: {{ tt_metal_ssh_key }}"
+          when: tt_metal_ssh_key is defined and tt_metal_ssh_key != "" and not ssh_key_stat.stat.exists
 
     - name: Install NodeJS
       tags: install-node
@@ -80,10 +103,20 @@
             path: "{{ ansible_env.HOME }}/.local"
             state: directory
 
+        - name: Check if Neovim tarball already exists
+          ansible.builtin.stat:
+            path: "/tmp/nvim-linux64.tar.gz"
+          register: nvim_tarball
+          changed_when: false
+
         - name: Download Neovim
           get_url:
-            url: https://github.com/neovim/neovim/releases/download/v0.11.2/nvim-linux-x86_64.tar.gz
+            url: https://github.com/neovim/neovim/releases/download/v0.11.5/nvim-linux-x86_64.tar.gz
             dest: "/tmp/nvim-linux64.tar.gz"
+            timeout: 300
+          retries: 5
+          delay: 15
+          when: not nvim_tarball.stat.exists
 
         - name: Extract Neovim
           unarchive:
@@ -102,6 +135,11 @@
             path: "{{ ansible_env.HOME }}/.config"
             state: directory
 
+        - name: Check if Neovim config source exists
+          ansible.builtin.stat:
+            path: "{{ nvim_config_source_dir }}"
+          register: nvim_config_source
+
         - name: Synchronize Neovim configuration files
           ansible.posix.synchronize:
             src: "{{ nvim_config_source_dir }}"
@@ -109,6 +147,12 @@
             delete: yes
             recursive: yes
             compress: yes
+          when: nvim_config_source.stat.exists
+
+        - name: Check if tmux config source exists
+          ansible.builtin.stat:
+            path: "{{ tmux_config_source_dir }}"
+          register: tmux_config_source
 
         - name: Synchronize tmux configuration files
           ansible.posix.synchronize:
@@ -117,45 +161,100 @@
             delete: yes
             recursive: yes
             compress: yes
+          when: tmux_config_source.stat.exists
+
+        - name: Check if Neovim is installed
+          ansible.builtin.stat:
+            path: "{{ ansible_env.HOME }}/.local/bin/nvim"
+          register: nvim_binary
 
         - name: Install Neovim plugins
           ansible.builtin.shell: '{{ ansible_env.HOME }}/.local/bin/nvim --headless "+Lazy! sync" +qa'
+          when: nvim_binary.stat.exists
+          timeout: 300
 
-
-    - name: Setup development environment
-      tags: dev
-      block:
-        - name: Create /localdev
-          file:
-            path: "/localdev/{{ ansible_user_id }}"
-            state: directory
-        - name: Create /proj_sw/user_dev directory
-          file:
-            path: "/proj_sw/user_dev/{{ ansible_user_id }}/src"
-            state: directory
-        - name: Create a symbolic link
-          ansible.builtin.file:
-            src: "/proj_sw/user_dev/{{ ansible_user_id }}/src"
-            dest: "/home/{{ ansible_user_id }}/src"
-            state: link
 
     - name: Clone TT-Metallium
       tags: metal
       block:
         - name: Create TT-Metallium parent directory
           file:
-            path: "/localdev/{{ ansible_user_id }}/tt-metal"
+            path: "/home/{{ ansible_user_id }}/wa/tt-metal"
             state: directory
+        - name: Check if tt-metal repository already exists
+          ansible.builtin.stat:
+            path: "/home/{{ ansible_user_id }}/wa/tt-metal/.git"
+          register: tt_metal_repo
+
         - name: Clone TT-Metallium into /localdev/{{ ansible_user_id }}
           ansible.builtin.git:
             repo: "git@github.com:tenstorrent/tt-metal.git"
-            dest: "/localdev/{{ ansible_user_id }}/tt-metal"
+            dest: "/home/{{ ansible_user_id }}/wa/tt-metal"
             single_branch: no
             version: main
-            update: no
+            update: yes
             recursive: yes
             key_file: "{{ tt_metal_ssh_key | default(omit) }}"
-        
+          when: not tt_metal_repo.stat.exists
+
+        - name: Update existing tt-metal repository
+          ansible.builtin.git:
+            repo: "git@github.com:tenstorrent/tt-metal.git"
+            dest: "/home/{{ ansible_user_id }}/wa/tt-metal"
+            version: main
+            update: yes
+            key_file: "{{ tt_metal_ssh_key | default(omit) }}"
+          when: tt_metal_repo.stat.exists
+
+        - name: Create source.sh file in tt-metal repository
+          ansible.builtin.copy:
+            dest: "/home/{{ ansible_user_id }}/wa/tt-metal/source.sh"
+            content: |
+              #!/usr/bin/env bash
+
+              export TT_METAL_HOME="$(pwd)"
+
+              export PYTHONPATH="$TT_METAL_HOME"
+
+              export ARCH_NAME="wormhole_b0"
+
+              if [ -d "python_env/bin" ]; then
+                  source python_env/bin/activate
+              else
+                  echo "WARNING: No python_env virtual environment found"
+              fi
+            mode: '0755'
+
+        - name: Check if create_venv.sh exists
+          ansible.builtin.stat:
+            path: "/home/{{ ansible_user_id }}/wa/tt-metal/create_venv.sh"
+          register: create_venv_script
+
+        - name: Run create_venv.sh to setup tt-metal environment
+          ansible.builtin.shell:
+            cmd: "bash create_venv.sh"
+            chdir: "/home/{{ ansible_user_id }}/wa/tt-metal"
+            creates: "/home/{{ ansible_user_id }}/wa/tt-metal/python_env"
+            executable: /bin/bash
+          when: create_venv_script.stat.exists
+          timeout: 600
+
+        - name: Initialize git submodules
+          ansible.builtin.shell:
+            cmd: "git submodule update --init --recursive"
+            chdir: "/home/{{ ansible_user_id }}/wa/tt-metal"
+          timeout: 300
+
+        - name: Check if build_metal.sh exists
+          ansible.builtin.stat:
+            path: "/home/{{ ansible_user_id }}/wa/tt-metal/build_metal.sh"
+          register: build_metal_script
+
+        - name: Compile tt-metal with build_metal.sh
+          ansible.builtin.shell: "./build_metal.sh -c --build-tests"
+          args:
+            chdir: "/home/{{ ansible_user_id }}/wa/tt-metal"
+          when: build_metal_script.stat.exists
 
     - name: Synchronize configurations
       tags: config
@@ -210,6 +309,14 @@
             state: present
             insertafter: EOF
 
+        - name: Add reset-multihost-galaxy alias
+          lineinfile:
+            path: "{{ ansible_env.HOME }}/.bashrc"
+            regexp: '^alias reset-multihost-galaxy='
+            line: 'alias reset-multihost-galaxy=''mpirun-ulfm --hostfile /etc/mpirun/hostfile --mca btl self,tcp --mca hwloc_base_binding_policy none --tag-output bash -c "source python_env/bin/activate && tt-smi -glx_reset --snapshot_no_tty"'''
+            state: present
+            insertafter: EOF
+
     - name: Install FZF 
       tags: fzf
       block:
@@ -220,19 +327,56 @@
             version: master
             depth: 1
 
+        - name: Check if fzf install script exists
+          ansible.builtin.stat:
+            path: "{{ ansible_env.HOME }}/.fzf/install"
+          register: fzf_install_script
+
         - name: Run the fzf install script
           ansible.builtin.shell: "{{ ansible_env.HOME }}/.fzf/install --all --no-update-rc"
           args:
             chdir: "{{ ansible_env.HOME }}/.fzf"
+          when: fzf_install_script.stat.exists
+          timeout: 120
           # Note: --all downloads binary and updates config files, --no-update-rc prevents changes to ~/.bashrc
 
-        - name: Ensure eval \"$(fzf --bash)\" is in bashrc
+        - name: Check if fzf binary exists
+          ansible.builtin.stat:
+            path: "{{ ansible_env.HOME }}/.fzf/bin/fzf"
+          register: fzf_binary
+
+        - name: Add fzf bin directory to PATH
           ansible.builtin.lineinfile:
             path: "{{ ansible_env.HOME }}/.bashrc"
-            regexp: '^eval.*fzf --bash'
-            line: 'eval "$(fzf --bash)"'
+            regexp: '^export PATH.*\.fzf/bin'
+            line: 'export PATH="$PATH:{{ ansible_env.HOME }}/.fzf/bin"'
             state: present
             insertafter: EOF
+          when: fzf_binary.stat.exists
+
+        - name: Source fzf key bindings
+          ansible.builtin.lineinfile:
+            path: "{{ ansible_env.HOME }}/.bashrc"
+            regexp: '^\[ -f.*fzf.*key-bindings\.bash'
+            line: '[ -f ~/.fzf/shell/key-bindings.bash ] && source ~/.fzf/shell/key-bindings.bash'
+            state: present
+            insertafter: EOF
+          when: fzf_binary.stat.exists
+
+        - name: Source fzf completion
+          ansible.builtin.lineinfile:
+            path: "{{ ansible_env.HOME }}/.bashrc"
+            regexp: '^\[ -f.*fzf.*completion\.bash'
+            line: '[ -f ~/.fzf/shell/completion.bash ] && source ~/.fzf/shell/completion.bash'
+            state: present
+            insertafter: EOF
+          when: fzf_binary.stat.exists
+
+    - name: Run hardware sanity tests
+      tags: sanity
+      block:
+        - name: Import sanity tests
+          ansible.builtin.import_tasks: dual_galaxy_sanity_tests_tasks.yaml
 
   environment:
     PATH: "/usr/bin:{{ ansible_env.PATH }}"
